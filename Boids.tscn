@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://2uxqla3s7wt8"]
+
+[ext_resource type="Script" path="res://scenes/Boids.cs" id="1_12pm0"]
+[ext_resource type="ArrayMesh" uid="uid://bvr62cf15bm1a" path="res://assets/cute fish/swordfish.mesh.res" id="2_lrwqd"]
+
+[sub_resource type="MultiMesh" id="MultiMesh_wbnob"]
+transform_format = 1
+use_colors = true
+use_custom_data = true
+mesh = ExtResource("2_lrwqd")
+
+[node name="Boids" type="Node3D"]
+script = ExtResource("1_12pm0")
+
+[node name="MultiMeshInstance3D" type="MultiMeshInstance3D" parent="."]
+multimesh = SubResource("MultiMesh_wbnob")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.58815, 1.40149, 6.2916)
