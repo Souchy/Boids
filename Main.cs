@@ -20,7 +20,7 @@ public static class Main
 
     static Main()
     {
-        ArchChunk3d tree = new(100);
+        ArchChunk2d tree = new(100);
         tree.Subdivide(3);
         World.SubscribeEntityDestroyed(tree.OnEntityDestroyed);
     }
