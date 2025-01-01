@@ -1,11 +1,17 @@
-[gd_scene load_steps=2 format=3 uid="uid://2uxqla3s7wt8"]
+[gd_scene load_steps=4 format=3 uid="uid://2uxqla3s7wt8"]
 
 [ext_resource type="Script" path="res://scenes/Boids.cs" id="1_12pm0"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_l5cv0"]
+
+[sub_resource type="MultiMesh" id="MultiMesh_w0cq1"]
+mesh = SubResource("QuadMesh_l5cv0")
 
 [node name="Boids" type="Node2D"]
 script = ExtResource("1_12pm0")
 
 [node name="MultiMeshInstance2D" type="MultiMeshInstance2D" parent="."]
+multimesh = SubResource("MultiMesh_w0cq1")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 anchor_mode = 0

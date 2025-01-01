@@ -17,11 +17,13 @@ public static class Main
         "Physics",
         new MovementSystem(World)
     );
+    public static ArchChunk2d Tree { get; set; }
 
     static Main()
     {
-        ArchChunk2d tree = new(100);
-        tree.Subdivide(3);
-        World.SubscribeEntityDestroyed(tree.OnEntityDestroyed);
+        Tree = new(100);
+        Tree.Subdivide(3);
+        World.SubscribeEntityDestroyed(Tree.Remove);
+        World.SubscribeEntityCreated(Tree.Insert);
     }
 }

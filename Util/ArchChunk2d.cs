@@ -13,11 +13,21 @@ namespace BoidsProject.Util;
 public class ArchChunk2d : IDisposable
 {
     #region Tree
+    public ArchChunk2d Root { get; set; }
     public ArchChunk2d? Parent { get; set; }
     public ArchChunk2d[]? Children { get; set; }
-    public List<Entity>? Data { get; set; }
+    public List<Entity>? Data { get; set; } = new();
     public bool IsLeaf { get => Children == null; }
-    public ArchChunk2d[] Neighboors { get => Parent?.Children; }
+    public ArchChunk2d[] Neighboors
+    {
+        get
+        {
+            if (Parent == null)
+                return Children;
+            else
+                return Parent.Children;
+        }
+    }
     #endregion
 
     #region Space
@@ -40,19 +50,17 @@ public class ArchChunk2d : IDisposable
     public ArchChunk2d(float size)
     {
         this.Size = size;
+        this.Root = this;
     }
-    public ArchChunk2d(Vector2 center, float size) : this(size)
+    public ArchChunk2d(Vector2 center, float size, ArchChunk2d parent) : this(size)
     {
         this.Center = center;
-    }
-
-    public void OnEntityDestroyed(in Entity entity)
-    {
-
+        this.Parent = parent;
+        this.Root = parent.Root;
     }
 
     /// <summary>
-    /// Returns a leaf node containing the position
+    /// Returns a leaf node containing the position, starting from this node
     /// </summary>
     public ArchChunk2d Search(Vector2 pos)
     {
@@ -63,21 +71,52 @@ public class ArchChunk2d : IDisposable
 
     public ArchChunk2d[] GetNeighboors(Vector2 pos) => Search(pos).Neighboors;
 
-    public void Insert(Entity e)
+    /// <summary>
+    /// Insert the entity in the node or its child
+    /// </summary>
+    public void Insert(in Entity e)
     {
-        if (IsLeaf)
-        {
-            Data.Add(e);
-            return;
-        }
-        else
+        if (!IsLeaf)
         {
             // If node has children
-            var pos = e.Get<Position2d>().Value;
+            var pos = e.Get<Position>().Value;
             var index = PositionToIndex(pos);
             //if(index > -1)
             Children[index].Insert(e);
         }
+        else
+        {
+            Data.Add(e);
+        }
+    }
+
+    /// <summary>
+    /// Remove the entity from the node or its child
+    /// </summary>
+    public void Remove(in Entity e)
+    {
+        if (!IsLeaf)
+        {
+            // If node has children
+            var pos = e.Get<Position>().Value;
+            var index = PositionToIndex(pos);
+            Children[index].Remove(e);
+        }
+        else
+        {
+            Data.Remove(e);
+        }
+    }
+
+    /// <summary>
+    /// Remove the entity from this leaf and insert it in the tree to a new leaf.
+    /// </summary>
+    public void MoveFromLeafToTree(in Entity e)
+    {
+        if (!IsLeaf)
+            throw new Exception("Call this function only on leaves to move an entity to a new leaf");
+        Data.Remove(e);
+        Root.Insert(e);
     }
 
     /// <summary>
@@ -112,8 +151,7 @@ public class ArchChunk2d : IDisposable
                     for (int y = -1; y <= 1; y += 2)
                     {
                         var offset = new Vector2(x * QuarterSize, y * QuarterSize);
-                        var node = new ArchChunk2d(Center + offset, HalfSize);
-                        node.Parent = this;
+                        var node = new ArchChunk2d(Center + offset, HalfSize, this);
                         Children[index++] = node;
                     }
                 }
@@ -154,6 +192,7 @@ public class ArchChunk2d : IDisposable
         Children = null;
         Data = null;
         Parent = null;
+        Root = null;
     }
 
 }

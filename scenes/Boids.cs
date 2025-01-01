@@ -1,3 +1,4 @@
+using Arch.Core;
 using BoidsProject.data;
 using Godot;
 using Godot.Sharp.Extras;
@@ -14,19 +15,23 @@ public partial class Boids : Node2D
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
-	{
+    {
         this.OnReady();
-         MultiMeshInstance2D.Multimesh.InstanceCount = 1000;
-        for (int i = 0; i < 1000; i++)
+
+        int count = 1000;
+        var texture = GD.Load<Texture2D>("res://assets/Flayer Evo1 1.png");
+        MultiMeshInstance2D.Texture = texture;
+        MultiMeshInstance2D.Multimesh.InstanceCount = count;
+        for (int i = 0; i < count; i++)
         {
             Main.World.Create(
                 new Alive(),
                 new BoidTag(),
-                new Position(Formulas.RandomVector3Centered().Normalized() * Formulas.BoundRadius),
-                new Direction(Formulas.RandomVector3Centered().Normalized()),
-                new Speed(Formulas.RandomSpeed()),
-                new Angle(0),
-                //new Transform3D(),
+                Main.Tree,
+                new Position(Parameters.RandomPosition()),
+                new Direction(Parameters.RandomVector2Centered().Normalized()),
+                new Speed(Parameters.RandomSpeed()),
+                new Transform2D(),
                 new Id(i)
             );
         }
