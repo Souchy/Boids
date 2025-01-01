@@ -14,4 +14,16 @@ script = ExtResource("1_12pm0")
 multimesh = SubResource("MultiMesh_w0cq1")
 
 [node name="Camera2D" type="Camera2D" parent="."]
-anchor_mode = 0
+
+[node name="Node2D" type="Node2D" parent="."]
+
+[node name="Marker2D" type="Marker2D" parent="Node2D"]
+
+[node name="Line2D" type="Line2D" parent="Node2D"]
+points = PackedVector2Array(0, 0, 1280, 720)
+width = 5.0
+
+[node name="Line2D2" type="Line2D" parent="Node2D"]
+points = PackedVector2Array(640, 0, 640, 720)
+width = 5.0
+default_color = Color(1, 0.483096, 0.216371, 1)

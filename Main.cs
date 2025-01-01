@@ -2,11 +2,7 @@
 using Arch.System;
 using BoidsProject.data;
 using BoidsProject.Util;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Godot;
 
 namespace BoidsProject;
 
@@ -21,7 +17,8 @@ public static class Main
 
     static Main()
     {
-        Tree = new(100);
+        Parameters.BoundRadius = new Vector2(1280, 720) / 2f;
+        Tree = new(Parameters.BoundRadius * 2);
         Tree.Subdivide(3);
         World.SubscribeEntityDestroyed(Tree.Remove);
         World.SubscribeEntityCreated(Tree.Insert);

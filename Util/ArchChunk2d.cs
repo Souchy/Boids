@@ -32,8 +32,8 @@ public class ArchChunk2d : IDisposable
 
     #region Space
     public Vector2 Center { get; set; } = Vector2.Zero;
-    private float _size;
-    public float Size
+    private Vector2 _size;
+    public Vector2 Size
     {
         get => _size;
         set
@@ -43,16 +43,16 @@ public class ArchChunk2d : IDisposable
             QuarterSize = value / 4f;
         }
     }
-    private float HalfSize;
-    private float QuarterSize;
+    private Vector2 HalfSize;
+    private Vector2 QuarterSize;
     #endregion
 
-    public ArchChunk2d(float size)
+    public ArchChunk2d(Vector2 size)
     {
         this.Size = size;
         this.Root = this;
     }
-    public ArchChunk2d(Vector2 center, float size, ArchChunk2d parent) : this(size)
+    public ArchChunk2d(Vector2 center, Vector2 size, ArchChunk2d parent) : this(size)
     {
         this.Center = center;
         this.Parent = parent;
@@ -150,7 +150,7 @@ public class ArchChunk2d : IDisposable
                 {
                     for (int y = -1; y <= 1; y += 2)
                     {
-                        var offset = new Vector2(x * QuarterSize, y * QuarterSize);
+                        var offset = new Vector2(x * QuarterSize.X, y * QuarterSize.Y);
                         var node = new ArchChunk2d(Center + offset, HalfSize, this);
                         Children[index++] = node;
                     }
