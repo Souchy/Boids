@@ -5,10 +5,10 @@ using System;
 
 namespace BoidsProject;
 
-public partial class Boids : Node3D
+public partial class Boids : Node2D
 {
     #region Nodes
-    [NodePath] public MultiMeshInstance3D MultiMeshInstance3D { get; set; }
+    [NodePath] public MultiMeshInstance2D MultiMeshInstance2D { get; set; }
     #endregion
 
 
@@ -16,7 +16,7 @@ public partial class Boids : Node3D
     public override void _Ready()
 	{
         this.OnReady();
-         MultiMeshInstance3D.Multimesh.InstanceCount = 1000;
+         MultiMeshInstance2D.Multimesh.InstanceCount = 1000;
         for (int i = 0; i < 1000; i++)
         {
             Main.World.Create(
@@ -26,7 +26,7 @@ public partial class Boids : Node3D
                 new Direction(Formulas.RandomVector3Centered().Normalized()),
                 new Speed(Formulas.RandomSpeed()),
                 new Angle(0),
-                new Transform3D(),
+                //new Transform3D(),
                 new Id(i)
             );
         }
