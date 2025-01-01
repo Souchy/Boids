@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "🕹 Debug Game": {
+      "commandName": "Executable",
+      "executablePath": "%GODOT%",
+      "commandLineArgs": "--path \"./\"",
+      "workingDirectory": "$(SolutionDir)"
+    }
+  }
+}

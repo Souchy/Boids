@@ -24,18 +24,21 @@ public partial class MovementSystem : BaseSystem<World, float>
     public void Move([Data] in float delta, in Entity ent, ref ArchChunk2d archRoot, ref MultiMeshInstance2D mm, ref Id id,
         ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
     {
+        var currentVel = dir.Value * speed.Value;
         var steering = Vector2.Zero;
+        steering += currentVel;
 
+        #region Neighboors
         var avgPos = Vector2.Zero;
         var avgVel = Vector2.Zero;
-        var close_d = Vector2.Zero;
+        var separation = Vector2.Zero;
         int countInAvoidance = 0;
         int countInProximity = 0;
 
         var archChunk = archRoot.Search(pos.Value);
         foreach (var chunk in archChunk.Neighboors)
         {
-            foreach(var e in chunk.Data)
+            foreach (var e in chunk.Data)
             {
                 // skip self
                 if (e == ent) continue;
@@ -46,10 +49,10 @@ public partial class MovementSystem : BaseSystem<World, float>
                 // Avoidance
                 if (dist <= Parameters.AvoidanceRadiusSquared)
                 {
-                    close_d += deltaPos;
+                    separation += deltaPos;
                     countInAvoidance++;
                 }
-                else 
+                else
                 // Flocking
                 if (dist <= Parameters.DetectRadiusSquared)
                 {
@@ -59,13 +62,21 @@ public partial class MovementSystem : BaseSystem<World, float>
                 }
             }
         }
+        if (countInProximity > 0)
+        {
+            avgPos /= countInProximity;
+            avgVel /= countInProximity;
+            steering += (avgPos - pos.Value) * Parameters.Cohesion;
+            steering += (avgVel - currentVel) * Parameters.Alignment;
+        }
+        if (countInAvoidance > 0)
+        {
+            steering += separation * Parameters.Separation;
+        }
+        #endregion
 
-        avgPos /= countInProximity;
-        avgVel /= countInProximity;
-
-        steering += close_d * Parameters.Separation;
-        steering += avgPos * Parameters.Cohesion;
-        steering += avgVel * Parameters.Alignment;
+        // Bound avoidance
+        steering += AvoidBounds(pos.Value, dir.Value);
         /*
          * TODO obstacles avoidance
         foreach(var obstacle in obstacles) {
@@ -73,8 +84,25 @@ public partial class MovementSystem : BaseSystem<World, float>
         }
          */
 
-
         ApplySteering(steering, archChunk, delta, ent, ref mm, ref id, ref pos, ref dir, ref speed, ref transform);
+    }
+
+    private Vector2 AvoidBounds(Vector2 pos, Vector2 dir)
+    {
+        // Avoid Bounds
+        var avoidBounds = Vector2.Zero;
+        var vectorToOrigin = pos;
+        var forwardDetection = vectorToOrigin + dir * Parameters.DetectRadiusSquared;
+        var boundDelta = forwardDetection.Abs() - Parameters.BoundRadius;
+        if (boundDelta.X > 0)
+        {
+            avoidBounds -= boundDelta.X * Parameters.BoundAvoidanceWeight * vectorToOrigin.Normalized().X * Vector2.Right;
+        }
+        if (boundDelta.Y > 0)
+        {
+            avoidBounds -= boundDelta.Y * Parameters.BoundAvoidanceWeight * vectorToOrigin.Normalized().Y * Vector2.Up;
+        }
+        return avoidBounds;
     }
 
     private void ApplySteering(Vector2 steering, ArchChunk2d archChunk,
