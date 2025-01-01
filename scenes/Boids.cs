@@ -17,7 +17,7 @@ public partial class Boids : Node2D
     {
         this.OnReady();
 
-        int count = 100;
+        int count = 1000;
         var texture = GD.Load<Texture2D>("res://assets/Flayer Evo1 1.png");
         MultiMeshInstance2D.Texture = texture;
         MultiMeshInstance2D.Multimesh.InstanceCount = count;
