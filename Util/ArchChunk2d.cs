@@ -13,6 +13,7 @@ namespace BoidsProject.Util;
 public class ArchChunk2d : IDisposable
 {
     #region Tree
+    private const int CHILD_COUNT = 4; // QuadTree
     public ArchChunk2d Root { get; set; }
     public ArchChunk2d? Parent { get; set; }
     public ArchChunk2d[]? Children { get; set; }
@@ -135,7 +136,7 @@ public class ArchChunk2d : IDisposable
     }
 
     /// <summary>
-    /// Make 8 children, or subdivide children into 8 each
+    /// Make 4 children, or subdivide children into 4 each
     /// </summary>
     public void Subdivide(int count = 1)
     {
@@ -143,9 +144,9 @@ public class ArchChunk2d : IDisposable
         {
             if (IsLeaf)
             {
-                Children = new ArchChunk2d[8];
+                Children = new ArchChunk2d[CHILD_COUNT];
                 int index = 0;
-                // Les 8 espaces autour d'un centre = Comme les 8 coins d'un cube 3x3
+                // Les 4 espaces autour d'un centre = Comme les 4 coins d'un carré 3x3
                 for (int x = -1; x <= 1; x += 2)
                 {
                     for (int y = -1; y <= 1; y += 2)

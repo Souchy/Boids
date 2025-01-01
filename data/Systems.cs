@@ -19,7 +19,7 @@ public partial class MovementSystem : BaseSystem<World, float>
 
     public MovementSystem(World world) : base(world) { }
     [Query]
-    [All(typeof(Alive))]
+    [All(typeof(Alive), typeof(BoidTag))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Move([Data] in float delta, in Entity ent, ref ArchChunk2d archRoot, ref MultiMeshInstance2D mm, ref Id id,
         ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
@@ -45,16 +45,16 @@ public partial class MovementSystem : BaseSystem<World, float>
 
                 var pos2 = e.Get<Position>().Value;
                 var deltaPos = pos.Value - pos2;
-                var dist = deltaPos.LengthSquared();
+                var dist = deltaPos.Length();
                 // Avoidance
-                if (dist <= Parameters.AvoidanceRadiusSquared)
+                if (dist <= Parameters.AvoidanceRadius)
                 {
                     separation += deltaPos;
                     countInAvoidance++;
                 }
                 else
                 // Flocking
-                if (dist <= Parameters.DetectRadiusSquared)
+                if (dist <= Parameters.DetectRadius)
                 {
                     avgPos += pos2;
                     avgVel += e.Get<Direction>().Value * e.Get<Speed>().Value;
@@ -92,7 +92,7 @@ public partial class MovementSystem : BaseSystem<World, float>
         // Avoid Bounds
         var avoidBounds = Vector2.Zero;
         var vectorToOrigin = pos;
-        var forwardDetection = vectorToOrigin + dir * Parameters.DetectRadiusSquared;
+        var forwardDetection = vectorToOrigin + dir * Parameters.DetectRadius;
         var boundDelta = forwardDetection.Abs() - Parameters.BoundRadius;
         if (boundDelta.X > 0)
         {
@@ -100,7 +100,7 @@ public partial class MovementSystem : BaseSystem<World, float>
         }
         if (boundDelta.Y > 0)
         {
-            avoidBounds -= boundDelta.Y * Parameters.BoundAvoidanceWeight * vectorToOrigin.Normalized().Y * Vector2.Up;
+            avoidBounds -= boundDelta.Y * Parameters.BoundAvoidanceWeight * vectorToOrigin.Normalized().Y * Vector2.Down;
         }
         return avoidBounds;
     }
@@ -110,12 +110,18 @@ public partial class MovementSystem : BaseSystem<World, float>
         ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
     {
         // Lerp velocity
-        speed.Value = speed.Value.LerpTo(steering.Length(), Parameters.Lerp);
+        var newSpeed = Math.Clamp(steering.Length(), Parameters.MinimumSpeed, Parameters.MaximumSpeed);
+        speed.Value = speed.Value.LerpTo(newSpeed, Parameters.Lerp);
         dir.Value = dir.Value.LerpTo(steering.Normalized(), Parameters.Lerp);
 
         // Update pos
         pos.Value += dir.Value * speed.Value * delta;
-        transform = new Transform2D(dir.Value.Angle(), pos.Value);
+        var angle = dir.Value.Angle();
+        //transform = new Transform2D(angle, pos.Value);
+        if (dir.Value.X > 0)
+            transform = new Transform2D(angle % (float) Math.PI, Parameters.FlipV, 0, pos.Value);
+        else
+            transform = new Transform2D(angle, pos.Value);
         mm.Multimesh.SetInstanceTransform2D(id.Value, transform);
 
         // Remove from leaf and move to tree

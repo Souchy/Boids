@@ -17,28 +17,35 @@ public partial class Boids : Node2D
     {
         this.OnReady();
 
-        int count = 1000;
+        int count = 100;
         var texture = GD.Load<Texture2D>("res://assets/Flayer Evo1 1.png");
         MultiMeshInstance2D.Texture = texture;
         MultiMeshInstance2D.Multimesh.InstanceCount = count;
+        MultiMeshInstance2D.Multimesh.Mesh = new QuadMesh()
+        {
+            Size = new Vector2(20, 20)
+        };
         for (int i = 0; i < count; i++)
         {
             Main.World.Create(
                 new Alive(),
                 new BoidTag(),
+
                 Main.Tree,
+                MultiMeshInstance2D,
+                new Id(i),
+
                 new Position(Parameters.RandomPosition()),
                 new Direction(Parameters.RandomVector2Centered().Normalized()),
                 new Speed(Parameters.RandomSpeed()),
-                new Transform2D(),
-                new Id(i)
+                new Transform2D()
             );
         }
     }
 
     public override void _PhysicsProcess(double delta)
     {
-        base._PhysicsProcess(delta);
+        Main.Systems.Update((float) delta);
     }
 
 }

@@ -1,0 +1,85 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0ehxje8ue46w"]
+
+[ext_resource type="Script" path="res://scenes/ParametersUi.cs" id="1_amq7s"]
+
+[node name="ParametersUi" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_amq7s")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+
+[node name="LblCount" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "Count"
+
+[node name="ValueCount" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblCohesion" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "Cohesion"
+
+[node name="ValueCohesion" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblAlignment" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "Alignment"
+
+[node name="ValueAlignment" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblSeparation" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "Separation"
+
+[node name="ValueSeparation" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblBoundAvoidanceWeight" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "BoundAvoidanceWeight"
+
+[node name="ValueBoundAvoidanceWeight" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblObstacleAvoidanceWeight" type="Label" parent="MarginContainer/HBoxContainer/GridContainer"]
+layout_mode = 2
+text = "ObstacleAvoidanceWeight"
+
+[node name="ValueObstacleAvoidanceWeight" type="SpinBox" parent="MarginContainer/HBoxContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LblFps" type="Label" parent="MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/outline_size = 1
+theme_override_constants/shadow_outline_size = 1
+text = "55 fps"

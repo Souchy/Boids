@@ -1,6 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://2uxqla3s7wt8"]
+[gd_scene load_steps=6 format=3 uid="uid://2uxqla3s7wt8"]
 
 [ext_resource type="Script" path="res://scenes/Boids.cs" id="1_12pm0"]
+[ext_resource type="Texture2D" uid="uid://dqiqmaf1mm7mf" path="res://assets/Flayer Evo1 1.png" id="2_ab683"]
+[ext_resource type="PackedScene" uid="uid://d0ehxje8ue46w" path="res://scenes/ParametersUi.tscn" id="3_7loi2"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_l5cv0"]
 
@@ -10,8 +12,24 @@ mesh = SubResource("QuadMesh_l5cv0")
 [node name="Boids" type="Node2D"]
 script = ExtResource("1_12pm0")
 
+[node name="ColorRect" type="ColorRect" parent="."]
+custom_minimum_size = Vector2(1280, 720)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -640.0
+offset_top = -360.0
+offset_right = 640.0
+offset_bottom = 360.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.123288, 0, 0.132813, 1)
+
 [node name="MultiMeshInstance2D" type="MultiMeshInstance2D" parent="."]
 multimesh = SubResource("MultiMesh_w0cq1")
+texture = ExtResource("2_ab683")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
@@ -27,3 +45,20 @@ width = 5.0
 points = PackedVector2Array(640, 0, 640, 720)
 width = 5.0
 default_color = Color(1, 0.483096, 0.216371, 1)
+
+[node name="FlayerEvo11" type="Sprite2D" parent="."]
+modulate = Color(1, 0.263592, 0.315863, 1)
+top_level = true
+position = Vector2(-25, 18)
+texture = ExtResource("2_ab683")
+
+[node name="ParametersUi" parent="." instance=ExtResource("3_7loi2")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -620.0
+offset_top = -333.0
+offset_right = -620.0
+offset_bottom = -333.0
+grow_horizontal = 1
+grow_vertical = 1
