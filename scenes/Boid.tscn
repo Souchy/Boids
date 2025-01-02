@@ -1,0 +1,36 @@
+[gd_scene load_steps=5 format=3 uid="uid://h4lajj00p8yk"]
+
+[ext_resource type="Texture2D" uid="uid://dqiqmaf1mm7mf" path="res://assets/Flayer Evo1 1.png" id="1_t4gxj"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_lixag"]
+radius = 18.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a1koo"]
+bg_color = Color(0.136719, 0.136719, 0.136719, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vn4mm"]
+bg_color = Color(0.6, 0.258267, 0.190789, 1)
+
+[node name="Boid" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("1_t4gxj")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_lixag")
+
+[node name="TextureProgressBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(30, 5)
+offset_left = -15.0
+offset_top = -25.0
+offset_right = 15.0
+offset_bottom = -20.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_a1koo")
+theme_override_styles/fill = SubResource("StyleBoxFlat_vn4mm")
+value = 70.0
+show_percentage = false

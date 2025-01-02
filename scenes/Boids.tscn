@@ -1,8 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://2uxqla3s7wt8"]
+[gd_scene load_steps=6 format=3 uid="uid://bi8l5qisi4dqu"]
 
 [ext_resource type="Script" path="res://scenes/Boids.cs" id="1_12pm0"]
 [ext_resource type="Texture2D" uid="uid://dqiqmaf1mm7mf" path="res://assets/Flayer Evo1 1.png" id="2_ab683"]
-[ext_resource type="PackedScene" uid="uid://d0ehxje8ue46w" path="res://scenes/ParametersUi.tscn" id="3_7loi2"]
+[ext_resource type="PackedScene" path="res://scenes/ParametersUi.tscn" id="3_7loi2"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_l5cv0"]
 

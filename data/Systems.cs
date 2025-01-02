@@ -22,7 +22,7 @@ public partial class MovementSystem : BaseSystem<World, float>
     [All(typeof(Alive), typeof(BoidTag))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Move([Data] in float delta, in Entity ent, ref ArchChunk2d archRoot, ref MultiMeshInstance2D mm, ref Id id,
-        ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
+        ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform, ref Node2D node)
     {
         var currentVel = dir.Value * speed.Value;
         var steering = Vector2.Zero;
@@ -85,6 +85,7 @@ public partial class MovementSystem : BaseSystem<World, float>
          */
 
         ApplySteering(steering, archChunk, delta, ent, ref mm, ref id, ref pos, ref dir, ref speed, ref transform);
+        node.Position = pos.Value;
     }
 
     private Vector2 AvoidBounds(Vector2 pos, Vector2 dir)

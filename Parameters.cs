@@ -16,7 +16,7 @@ public static class Parameters
     public static readonly Vector2 HalfPointVector = new(0.5f, 0.5f);
     public static readonly Vector2 FlipV = new Vector2(1, -1);
 
-
+    public static int Count = 100;
     public static float Lerp = 0.1f;
 
     public static Vector2 BoundRadius = new(50, 50);

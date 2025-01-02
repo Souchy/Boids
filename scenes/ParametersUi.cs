@@ -43,6 +43,18 @@ public partial class ParametersUi : Control
                 GridContainer.AddChild(input);
             }
             else
+            if (field.FieldType == typeof(int))
+            {
+                var input = new SpinBox();
+                input.Rounded = false;
+                input.AllowGreater = true;
+                input.AllowLesser = true;
+                input.Value = (int) field.GetValue(null);
+                input.Name = field.Name + "Input";
+                input.ValueChanged += (val) => field.SetValue(null, (int) val);
+                GridContainer.AddChild(input);
+            }
+            else
             if (field.FieldType == typeof(Vector2))
             {
                 var container = new HBoxContainer();

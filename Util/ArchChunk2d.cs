@@ -138,9 +138,9 @@ public class ArchChunk2d : IDisposable
     /// <summary>
     /// Make 4 children, or subdivide children into 4 each
     /// </summary>
-    public void Subdivide(int count = 1)
+    public void Subdivide(int subCount = 1)
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i <= subCount; i++)
         {
             if (IsLeaf)
             {
