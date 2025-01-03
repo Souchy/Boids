@@ -13,21 +13,44 @@ namespace BoidsProject.Util;
 
 public static class ChunkPositions
 {
-    //public static Vector2 Topleft = new Vector2(-1, -1);
-    public static Dictionary<ChunkPositionInParent, Vector2> Positions = new()
+    public static Vector2[] Vectors = // (int X, int Y)
     {
-        {ChunkPositionInParent.TopLeft, new Vector2(-1, -1) },
-        {ChunkPositionInParent.TopRight, new Vector2(1, -1) },
-        {ChunkPositionInParent.BottomLeft, new Vector2(-1, 1) },
-        {ChunkPositionInParent.BottomRight, new Vector2(1, 1) }
+        new(-1, -1),
+        new(-1, +1),
+        new(+1, -1),
+        new(+1, +1)
     };
-}
-public enum ChunkPositionInParent
-{
-    TopLeft,    // -1, -1
-    BottomLeft, // -1, +1
-    TopRight,   // +1, -1
-    BottomRight // +1, +1
+
+    public static int LeftTop = 0b00000000;     // -1, -1 // 00 = 0
+    public static int LeftBottom = 0b00000001;  // -1, +1 // 01 = 1
+    public static int RightTop = 0b00000010;    // +1, -1 // 10 = 2
+    public static int RightBottom = 0b00000011; // +1, +1 // 11 = 3
+
+    public static int[] Quadrants = { LeftTop, LeftBottom, RightTop, RightBottom };
+    public static int[] Left = { LeftTop, LeftBottom };
+    public static int[] Right = { RightTop, RightBottom };
+    public static int[] Top = { LeftTop, RightTop };
+    public static int[] Bottom = { LeftBottom, RightBottom };
+
+    public static int[][] Rows = { Top, Bottom };
+    public static int[][] Columns = { Left, Right };
+
+    public static int GetOpposite(int pos)
+    {
+        return ~pos & 0x000000FF;
+    }
+    public static int Col(int pos) => pos & 0b00000001;
+    public static int Row(int pos) => (pos & 0b00000010) >> 1; // convert to 0 or 1 instead of 2 or 3
+    public static int[] GetOppositeRow(int pos)
+    {
+        int row = Row(~pos); // flip then get row
+        return Rows[row];
+    }
+    public static int[] OppositeColumn(int pos)
+    {
+        int col = Col(~pos); // flip then get col
+        return Columns[col];
+    }
 }
 
 /// <summary>
@@ -37,7 +60,7 @@ public class ArchChunk2d : IDisposable
 {
     #region Tree
     private const int CHILD_COUNT = 4; // QuadTree
-    public ChunkPositionInParent position;
+    public int position;
     public ArchChunk2d Root { get; set; }
     public ArchChunk2d? Parent { get; set; }
     public ArchChunk2d[] Children { get; set; } = Array.Empty<ArchChunk2d>();
@@ -99,16 +122,28 @@ public class ArchChunk2d : IDisposable
         // 1: Siblings are always neighboors
         // 2: Check if the cell is touching the edge of the grand-father and any old ancestor.
 
-        // A, B
-        // C, D
-        // T | A, B, C, D
-        // R0 | 00, 01 | 04, 05
-        // R1 | 02, 03 | 06, 07
-        //    -----------------
-        // R2 | 08, 09 | 12, 13
-        // R3 | 10, 11 | 14, 15
+        // A, B, C, D
+        // E, F, G, H
+        // I, J, K, L
+        // M, N, O, P
 
-        //A 06 -> { [01, 03], [04, 05, 06, 07], [09], [12, 13] }
+        // R0 | 00, 01 | 04, 05 | 16, 17 | 00, 01
+        // R1 | 02, 03 | 06, 07 | 18, 19 | 02, 03
+        //    ------------------------------------
+        // R2 | 08, 09 | 12, 13 | 20, 21 | 00, 01
+        // R3 | 10, 11 | 14, 15 | 22, 23 | 02, 03
+        //    -----------------------------------
+        // R2 | 00, 01 | 00, 01 | 00, 01 | 00, 01
+        // R3 | 02, 03 | 02, 03 | 02, 03 | 02, 03
+        //    -----------------------------------
+        // R2 | 00, 01 | 00, 01 | 00, 01 | 00, 01
+        // R3 | 02, 03 | 02, 03 | 02, 03 | 02, 03
+
+        // B 06 -> A [01, 03], B [04, 05, 06, 07], C [09], D [12, 13] }
+        // B 02 = BottomLeft
+        //      A (left of B)       -> 01, 03 (right column, opposite side)
+        //      C (bottomleft of B) -> 09 (top-right = opposite corner)
+        //      D (down of B)       -> 12, 13 (top row, opposite side)
         List<ArchChunk2d> neighboors06 = new();
         // A
         neighboors06.Add(Parent.Parent.Children[0].Children[1]);
@@ -121,7 +156,7 @@ public class ArchChunk2d : IDisposable
         neighboors06.Add(Parent.Parent.Children[3].Children[1]);
         neighboors06.Add(Parent.Parent.Children[3].Children[2]);
 
-        ChunkPositionInParent pos = ChunkPositionInParent.BottomLeft;
+        //ChunkPositionInParent pos = ChunkPositionInParent.BottomLeft;
 
 
 
@@ -255,7 +290,7 @@ public class ArchChunk2d : IDisposable
                 {
                     var offset = new Vector2(x * QuarterSize.X, y * QuarterSize.Y);
                     var node = new ArchChunk2d(Center + offset, HalfSize, this);
-                    node.position = (ChunkPositionInParent) index;
+                    node.position = index;
                     Children[index++] = node;
                 });
                 var temp = Data;
@@ -315,15 +350,17 @@ public class ArchChunk2d : IDisposable
         }
     }
 
-    private void ForeachCell(Action<int, int> act)
+    private void ForeachCell(Action<float, float> act)
     {
-        for (int x = -1; x <= 1; x += 2)
-        {
-            for (int y = -1; y <= 1; y += 2)
-            {
-                act(x, y);
-            }
-        }
+        //for (int x = -1; x <= 1; x += 2)
+        //{
+        //    for (int y = -1; y <= 1; y += 2)
+        //    {
+        //        act(x, y);
+        //    }
+        //}
+        foreach (var vec in ChunkPositions.Vectors)
+            act(vec.X, vec.Y);
     }
 
     public void Dispose()
