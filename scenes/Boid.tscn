@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://h4lajj00p8yk"]
+[gd_scene load_steps=6 format=3 uid="uid://h4lajj00p8yk"]
 
 [ext_resource type="Texture2D" uid="uid://dqiqmaf1mm7mf" path="res://assets/Flayer Evo1 1.png" id="1_t4gxj"]
+[ext_resource type="Texture2D" uid="uid://d1w5q818ljna5" path="res://assets/ring100.png" id="2_1g5nt"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_lixag"]
 radius = 18.0
@@ -14,7 +15,7 @@ bg_color = Color(0.6, 0.258267, 0.190789, 1)
 [node name="Boid" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-visible = false
+process_mode = 4
 texture = ExtResource("1_t4gxj")
 
 [node name="Area2D" type="Area2D" parent="."]
@@ -34,3 +35,6 @@ theme_override_styles/background = SubResource("StyleBoxFlat_a1koo")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vn4mm")
 value = 70.0
 show_percentage = false
+
+[node name="Ring" type="Sprite2D" parent="."]
+texture = ExtResource("2_1g5nt")

@@ -1,19 +1,16 @@
+using Boids.Util;
 using BoidsProject;
 using Godot;
 using Godot.Sharp.Extras;
 using System;
 using System.Linq;
+using System.Reflection;
 
 public partial class ParametersUi : Control
 {
     #region Nodes
     [NodePath] public Label LblFps { get; set; }
     [NodePath] public GridContainer GridContainer { get; set; }
-    //[NodePath] public SpinBox ValueCohesion {  get; set; }
-    //[NodePath] public SpinBox ValueAlignment { get; set; }
-    //[NodePath] public SpinBox ValueSeparation { get; set; }
-    //[NodePath] public SpinBox ValueBoundAvoidanceWeight { get; set; }
-    //[NodePath] public SpinBox ValueObstacleAvoidanceWeight { get; set; }
     #endregion
 
     // Called when the node enters the scene tree for the first time.
@@ -32,64 +29,80 @@ public partial class ParametersUi : Control
             GridContainer.AddChild(lbl);
 
             if (field.FieldType == typeof(float))
-            {
-                var input = new SpinBox();
-                input.Rounded = false;
-                input.AllowGreater = true;
-                input.AllowLesser = true;
-                input.Value = (float) field.GetValue(null);
-                input.Name = field.Name + "Input";
-                input.ValueChanged += (val) => field.SetValue(null, (float) val);
-                GridContainer.AddChild(input);
-            }
+                AddFieldFloat(field);
             else
             if (field.FieldType == typeof(int))
-            {
-                var input = new SpinBox();
-                input.Rounded = false;
-                input.AllowGreater = true;
-                input.AllowLesser = true;
-                input.Value = (int) field.GetValue(null);
-                input.Name = field.Name + "Input";
-                input.ValueChanged += (val) => field.SetValue(null, (int) val);
-                GridContainer.AddChild(input);
-            }
+                AddFieldInt(field);
             else
             if (field.FieldType == typeof(Vector2))
-            {
-                var container = new HBoxContainer();
-                container.Name = field.Name + "Input";
-                {
-                    var inputX = new SpinBox();
-                    inputX.Rounded = false;
-                    inputX.Value = ((Vector2) field.GetValue(null)).X;
-                    inputX.ValueChanged += (val) =>
-                    {
-                        var vec = ((Vector2) field.GetValue(null));
-                        vec.X = (float) val;
-                        field.SetValue(null, vec);
-                    };
-                    container.AddChild(inputX);
-                }
-                {
-                    var inputY = new SpinBox();
-                    inputY.Rounded = false;
-                    inputY.Value = ((Vector2) field.GetValue(null)).Y;
-                    inputY.ValueChanged += (val) =>
-                    {
-                        var vec = ((Vector2) field.GetValue(null));
-                        vec.Y = (float) val;
-                        field.SetValue(null, vec);
-                    };
-                    container.AddChild(inputY);
-                }
-                GridContainer.AddChild(container);
-            }
+                AddFieldVector2(field);
             else
-            {
                 GridContainer.AddChild(new Panel());
-            }
         }
+    }
+
+    private SpinBox MkSpinBox<T>(FieldInfo field)
+    {
+        return MkSpinBox(field.Name + "Input", Convert.ToDouble(field.GetValue(null)), (val) =>
+        {
+            field.SetValue(null, Convert.ChangeType(val, typeof(T)));
+            EventBus.centralBus.publish(field.Name);
+        });
+    }
+    private SpinBox MkSpinBox(string name, double value, Godot.Range.ValueChangedEventHandler action = null)
+    {
+        var input = new SpinBox
+        {
+            Step = 0.1f,
+            Rounded = false,
+            MaxValue = 2000,
+            AllowGreater = true,
+            AllowLesser = true,
+            Value = value,
+            Name = name
+        };
+        if (action != null) input.ValueChanged += action;
+        return input;
+    }
+    private void AddFieldInt(FieldInfo field)
+    {
+        var input = MkSpinBox<int>(field);
+        input.Step = 1;
+        GridContainer.AddChild(input);
+    }
+    private void AddFieldFloat(FieldInfo field)
+    {
+        var input = MkSpinBox<float>(field);
+        GridContainer.AddChild(input);
+    }
+
+    private void AddFieldVector2(FieldInfo field)
+    {
+        var container = new HBoxContainer();
+        container.Name = field.Name + "Input";
+        // x
+        {
+            var input = MkSpinBox("", ((Vector2) field.GetValue(null)).X, (val) =>
+            {
+                var vec = ((Vector2) field.GetValue(null));
+                vec.X = (float) val;
+                field.SetValue(null, vec);
+                EventBus.centralBus.publish(field.Name);
+            });
+            container.AddChild(input);
+        }
+        // y
+        {
+            var input = MkSpinBox("", ((Vector2) field.GetValue(null)).Y, (val) =>
+            {
+                var vec = ((Vector2) field.GetValue(null));
+                vec.Y = (float) val;
+                field.SetValue(null, vec);
+                EventBus.centralBus.publish(field.Name);
+            });
+            container.AddChild(input);
+        }
+        GridContainer.AddChild(container);
     }
 
     public override void _Process(double delta)

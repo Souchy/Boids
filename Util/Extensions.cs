@@ -31,4 +31,12 @@ public static class Extensions
     {
         return a * (1 - t) + b * t;
     }
+    public static long CurrentTimeMillis(this DateTime time)
+    {
+        return time.Ticks / TimeSpan.TicksPerMillisecond;
+    }
+    public static long CurrentTimeSecond(this DateTime time)
+    {
+        return time.Ticks / TimeSpan.TicksPerSecond;
+    }
 }

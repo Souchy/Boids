@@ -11,27 +11,46 @@ namespace BoidsProject;
 
 public static class Parameters
 {
-    public const float OneTurn = 2f * (float) Math.PI;
+    public static readonly float OneTurn = 2f * (float) Math.PI;
     public static readonly Random Rnd = new Random();
     public static readonly Vector2 HalfPointVector = new(0.5f, 0.5f);
-    public static readonly Vector2 FlipV = new Vector2(1, -1);
+    public static readonly Vector2 FlipV = new(1, -1);
+    public static readonly Vector2 FlipH = new(-1, 1);
 
-    public static int Count = 100;
+    public static readonly int MaximumBoidsPerChunk = 20;
+    public static readonly int MinimumBoidsPerChunk = 16;
+
+    // Count
+    public static int Count = 1000;
+    // Lerp
     public static float Lerp = 0.1f;
+    // Tree factor
+    public static float TreeToSpaceboundFactor = 1f;
 
+    // Bounds
     public static Vector2 BoundRadius = new(50, 50);
     public static float BoundAvoidanceWeight = 1f;
-    public static float AvoidanceRadius = 30f; // .Squared()
-    public static float DetectRadius = 100f;
 
+    // Detection / Avoidance 
+    public static float DetectRadius = 100f;
+    public static float DetectAngle = OneTurn * 0.8f;
+    public static float AvoidanceRadius = 15; //30f; // .Squared()
+
+    // Base rules
     public static float Cohesion = 1f;
     public static float Alignment = 2f;
-    public static float Separation = 10f;
-    public static float MinimumSpeed = 10f;
-    public static float MaximumSpeed = 100f;
+    public static float Separation = 3; //10f;
 
-    public static float DetectAngle = OneTurn * 0.8f;
+    // Speed
+    public static float MinimumSpeed = 10f;
+    public static float MaximumSpeed = 500f;
+
+    // Obstacles
     public static float ObstacleAvoidanceWeight = 0.1f;
+
+    // Target
+    public static Vector2 Target = Vector2.Zero;
+    public static float TargetWeight = 0.5f;
 
     public static IEnumerable<FieldInfo> Fields => typeof(Parameters).GetFields().Where(f => !f.IsInitOnly);
 
