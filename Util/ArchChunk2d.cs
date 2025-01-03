@@ -35,10 +35,6 @@ public static class ChunkPositions
     public static int[][] Rows = { Top, Bottom };
     public static int[][] Columns = { Left, Right };
 
-    public static int GetOpposite(int pos)
-    {
-        return ~pos & 0x000000FF;
-    }
     public static int Col(int pos) => pos & 0b00000001;
     public static int Row(int pos) => (pos & 0b00000010) >> 1; // convert to 0 or 1 instead of 2 or 3
     public static int[] GetOppositeRow(int pos)
@@ -46,10 +42,14 @@ public static class ChunkPositions
         int row = Row(~pos); // flip then get row
         return Rows[row];
     }
-    public static int[] OppositeColumn(int pos)
+    public static int[] GetOppositeColumn(int pos)
     {
         int col = Col(~pos); // flip then get col
         return Columns[col];
+    }
+    public static int GetOppositeCorner(int pos)
+    {
+        return ~pos & 0x000000FF;
     }
 }
 
@@ -127,36 +127,93 @@ public class ArchChunk2d : IDisposable
         // I, J, K, L
         // M, N, O, P
 
-        // R0 | 00, 01 | 04, 05 | 16, 17 | 00, 01
-        // R1 | 02, 03 | 06, 07 | 18, 19 | 02, 03
-        //    ------------------------------------
-        // R2 | 08, 09 | 12, 13 | 20, 21 | 00, 01
-        // R3 | 10, 11 | 14, 15 | 22, 23 | 02, 03
-        //    -----------------------------------
-        // R2 | 00, 01 | 00, 01 | 00, 01 | 00, 01
-        // R3 | 02, 03 | 02, 03 | 02, 03 | 02, 03
-        //    -----------------------------------
-        // R2 | 00, 01 | 00, 01 | 00, 01 | 00, 01
-        // R3 | 02, 03 | 02, 03 | 02, 03 | 02, 03
+        //  0, 1 | 0, 1 * 0, 1 | 0, 1
+        //  2, 3 | 2, 3 * 2, 3 | 2, 3
+        // --------------------------
+        //  0, 1 | 0, 1 * 0, 1 | 0, 1
+        //  2, 3 | 2, 3 * 2, 3 | 2, 3
+        //  * * * * * * * * * * * * * 
+        //  0, 1 | 0, 1 * 0, 1 | 0, 1
+        //  2, 3 | 2, 3 * 2, 3 | 2, 3
+        // --------------------------
+        //  0, 1 | 0, 1 * 0, 1 | 0, 1
+        //  2, 3 | 2, 3 * 2, 3 | 2, 3
 
-        // B 06 -> A [01, 03], B [04, 05, 06, 07], C [09], D [12, 13] }
-        // B 02 = BottomLeft
-        //      A (left of B)       -> 01, 03 (right column, opposite side)
-        //      C (bottomleft of B) -> 09 (top-right = opposite corner)
-        //      D (down of B)       -> 12, 13 (top row, opposite side)
-        List<ArchChunk2d> neighboors06 = new();
+
+        // A 00 = 0 -> A [0, 1, 2, 3] }
+        // A 00 = BottomLeft
+        int pos = ChunkPositions.LeftBottom;
+        List<ArchChunk2d> neighboors = new();
         // A
-        neighboors06.Add(Parent.Parent.Children[0].Children[1]);
-        neighboors06.Add(Parent.Parent.Children[0].Children[3]);
-        // B: #1 rule
-        neighboors06.AddRange(Parent.Children);
-        // C
-        neighboors06.Add(Parent.Parent.Children[2].Children[1]);
-        // D
-        neighboors06.Add(Parent.Parent.Children[3].Children[1]);
-        neighboors06.Add(Parent.Parent.Children[3].Children[2]);
+        foreach (var quad in ChunkPositions.Quadrants)
+            neighboors.Add(Parent.Children[quad]);
 
-        //ChunkPositionInParent pos = ChunkPositionInParent.BottomLeft;
+        var c = this;
+        int[] quads0 = ChunkPositions.Quadrants;
+        int[] oppCol0 = ChunkPositions.GetOppositeColumn(c.position);
+        int[] oppRow0 = ChunkPositions.GetOppositeRow(c.position);
+        int corner0 = ChunkPositions.GetOppositeCorner(c.position);
+        while (c != null)
+        {
+            // if outside the range of the chunk, need to go higher
+            if (this.position == c.position)
+            {
+                c = c.Parent;
+                continue;
+            }
+            if (this.position == corner0)
+            {
+
+                break;
+            }
+
+            int[] quads = ChunkPositions.Quadrants;
+            int[] oppCol = ChunkPositions.GetOppositeColumn(c.position);
+            int[] oppRow = ChunkPositions.GetOppositeRow(c.position);
+            int corner = ChunkPositions.GetOppositeCorner(c.position);
+
+            c = c.Parent;
+        }
+
+        // B 10 = 2 -> A [1, 3], B [0, 1, 2, 3], C [1], D [0, 1] }
+        // B 10 = BottomLeft
+        //      A (left of B)       -> 1, 3 (right column, opposite side)
+        //      C (bottomleft of B) -> 1 (top-right = opposite corner)
+        //      D (down of B)       -> 0, 1 (top row, opposite side)
+        pos = ChunkPositions.LeftBottom;
+        neighboors = new();
+        // A
+        foreach (var quad in ChunkPositions.GetOppositeColumn(pos))
+            neighboors.Add(Parent.Parent.Children[0].Children[quad]);
+        // B
+        foreach (var quad in ChunkPositions.Quadrants)
+            neighboors.Add(Parent.Children[quad]);
+        // C
+        neighboors.Add(Parent.Parent.Children[2].Children[ChunkPositions.GetOppositeCorner(pos)]);
+        // D
+        foreach (var quad in ChunkPositions.GetOppositeRow(pos))
+            neighboors.Add(Parent.Parent.Children[3].Children[quad]);
+
+        // B 10 = 2 -> A [1, 3], B [0, 1, 2, 3], C [1], D [0, 1] }
+        // B 02 = BottomLeft
+        //      A (left of B)       -> 1, 3 (right column, opposite side)
+        //      C (bottomleft of B) -> 1 (top-right = opposite corner)
+        //      D (down of B)       -> 0, 1 (top row, opposite side)
+        pos = ChunkPositions.LeftBottom;
+        neighboors = new();
+        // A
+        foreach (var quad in ChunkPositions.GetOppositeColumn(pos))
+            neighboors.Add(Parent.Parent.Children[0].Children[quad]);
+        // B
+        foreach (var quad in ChunkPositions.Quadrants)
+            neighboors.Add(Parent.Children[quad]);
+        // C
+        neighboors.Add(Parent.Parent.Children[2].Children[ChunkPositions.GetOppositeCorner(pos)]);
+        // D
+        foreach (var quad in ChunkPositions.GetOppositeRow(pos))
+            neighboors.Add(Parent.Parent.Children[3].Children[quad]);
+
+
 
 
 
