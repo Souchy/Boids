@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Arch.System;
+using Boids.Util;
 using BoidsProject.Util;
 using Godot;
 using System;
@@ -35,8 +36,15 @@ public partial class MovementSystem : BaseSystem<World, float>
         int countInAvoidance = 0;
         int countInProximity = 0;
 
-        var archChunk = archRoot.Search(pos.Value);
-        foreach (var e in archChunk.Neighboors.SelectMany(n => n.Data))
+        var boidChunk = archRoot.Search(pos.Value);
+        //archRoot.Search(pos.Value, new Vector2(Parameters.DetectRadius, Parameters.DetectRadius), out List<ArchChunk2d> archChunks);
+
+        //List<ArchChunk2d> archChunks = new();
+        //var searchRect = new Intersections.Rectangle(pos.Value, new Vector2(Parameters.DetectRadius, Parameters.DetectRadius));
+        //archRoot.Search(searchRect, archChunks);
+
+        //foreach(var e in archChunks.SelectMany(n => n.Data))
+        foreach (var e in boidChunk.Neighboors.SelectMany(n => n.Data))
         {
             // skip self
             if (e == ent) continue;
@@ -80,10 +88,10 @@ public partial class MovementSystem : BaseSystem<World, float>
         steering += ToTarget(pos.Value);
 
         // Apply
-        ApplySteering(steering, archChunk, delta, ent, ref mm, ref id, ref node2d, ref pos, ref dir, ref speed, ref transform);
+        ApplySteering(steering, boidChunk, delta, ent, ref mm, ref id, ref node2d, ref pos, ref dir, ref speed, ref transform);
 
         // Remove from leaf and move to tree
-        archChunk.MoveFromLeafToTree(ent);
+        boidChunk.MoveFromLeafToTree(ent);
     }
 
     private Vector2 ToTarget(Vector2 pos)

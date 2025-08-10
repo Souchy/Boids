@@ -5,9 +5,11 @@ using Boids.Util;
 using BoidsProject.data;
 using Godot;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static Boids.Util.Intersections;
 
 namespace BoidsProject.Util;
 
@@ -240,6 +242,41 @@ public class ArchChunk2d : IDisposable
         if (IsLeaf) return this;
         int index = PositionToIndex(pos);
         return Children[index].Search(pos);
+    }
+
+    public void Search(Rectangle rect, List<ArchChunk2d> result)
+    {
+        var thisRect = new Rectangle(this.Center, this.HalfSize);
+        if(Intersections.IsContained(rect, thisRect))
+        {
+            Enlist(result);
+        }
+        else 
+        if(Intersections.Intersects(rect, thisRect))
+        {
+            if (IsLeaf)
+            {
+                result.Add(this);
+                return;
+            }
+            for (int i = 0; i < CHILD_COUNT; i++)
+            {
+                Children[i].Search(rect, result);
+            }
+        }
+
+    }
+    public void Enlist(List<ArchChunk2d> result)
+    {
+        if (IsLeaf)
+        {
+            result.Add(this);
+            return;
+        }
+        foreach (var child in Children)
+        {
+            child.Enlist(result);
+        }
     }
 
     public ArchChunk2d[] GetNeighboors(Vector2 pos) => Search(pos).Neighboors;
