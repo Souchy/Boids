@@ -20,7 +20,14 @@ public partial class Boids : Node2D
     [NodePath] public Node2D Target { get; set; }
     #endregion
 
-    public override void _PhysicsProcess(double delta) => Main.Instance.Systems.Update((float) delta);
+    public override void _PhysicsProcess(double delta)
+    {
+        Parameters.AvoidanceRadiusSquare = Parameters.AvoidanceRadius * Parameters.AvoidanceRadius;
+        Parameters.DetectRadiusSquare = Parameters.DetectRadius * Parameters.DetectRadius;
+        Main.Instance.Tree.Clear();
+        Main.Instance.Systems.Update((float) delta);
+        //OnResize();
+    }
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -60,7 +67,7 @@ public partial class Boids : Node2D
                 MultiMeshInstance2D.AddChild(node);
         }
 
-        DrawChunks(Main.Instance.Tree, 0, Main.Instance.Tree.GetDeepestDepth());
+        //DrawChunks(Main.Instance.Tree, 0, Quadtree<int>.MAX_DEPTH);
     }
 
     [Subscribe(Events.DrawChunks, nameof(Parameters.BoundRadius), nameof(Parameters.TreeToSpaceboundFactor))]
@@ -69,10 +76,10 @@ public partial class Boids : Node2D
         BoundsBackground.Size = Parameters.BoundRadius * 2f;
         BoundsBackground.Position = -Parameters.BoundRadius;
         Lines.RemoveAndQueueFreeChildren();
-        DrawChunks(Main.Instance.Tree, 0, Main.Instance.Tree.GetDeepestDepth());
+        DrawChunks(Main.Instance.Tree, 0, Quadtree<int>.MAX_DEPTH); //Main.Instance.Tree.GetDeepestDepth());
     }
 
-    private void DrawChunks(ArchChunk2d chunk, int depth, int totalDepth)
+    private void DrawChunks<T>(Quadtree<T> chunk, int depth, int totalDepth)
     {
         if (chunk.IsLeaf) return;
         foreach (var child in chunk.Children)
@@ -96,6 +103,7 @@ public partial class Boids : Node2D
 
         Lines.AddChild(v);
         Lines.AddChild(h);
+        //GD.Print("Draw " + chunk.Center);
     }
 
     public override void _Input(InputEvent @event)
@@ -105,7 +113,7 @@ public partial class Boids : Node2D
             InputEventMouseButton emb = (InputEventMouseButton) @event;
             if (emb.IsPressed())
             {
-                if(emb.ButtonIndex == MouseButton.Left)
+                if(emb.ButtonIndex == MouseButton.Right)
                 {
                     Target.Position = this.GetGlobalMousePosition(); //emb.Position;
                     Parameters.Target = Target.Position;

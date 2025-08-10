@@ -19,10 +19,11 @@ public partial class MovementSystem : BaseSystem<World, float>
 {
 
     public MovementSystem(World world) : base(world) { }
+
     [Query]
     [All(typeof(Alive), typeof(BoidTag))]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Move([Data] in float delta, in Entity ent, ref ArchChunk2d archRoot, ref MultiMeshInstance2D mm, ref Id id, ref Node2D node2d,
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Move([Data] in float delta, in Entity ent, ref Quadtree<EntityReference> archRoot, ref MultiMeshInstance2D mm, ref Id id, ref Node2D node2d,
         ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
     {
         var currentVel = dir.Value * speed.Value;
@@ -36,31 +37,31 @@ public partial class MovementSystem : BaseSystem<World, float>
         int countInAvoidance = 0;
         int countInProximity = 0;
 
-        var boidChunk = archRoot.Search(pos.Value);
-        //archRoot.Search(pos.Value, new Vector2(Parameters.DetectRadius, Parameters.DetectRadius), out List<ArchChunk2d> archChunks);
 
-        //List<ArchChunk2d> archChunks = new();
-        //var searchRect = new Intersections.Rectangle(pos.Value, new Vector2(Parameters.DetectRadius, Parameters.DetectRadius));
-        //archRoot.Search(searchRect, archChunks);
+        var neighboorNodes = archRoot.QueryNodes(pos.Value, Parameters.DetectRadius, []);
+        var neighboorEntities = neighboorNodes.SelectMany(n => n.Data).ToArray(); //.Where(eref => eref.IsAlive()).Select(eref => eref.Entity);
+        int count = neighboorEntities.Length;
 
-        //foreach(var e in archChunks.SelectMany(n => n.Data))
-        foreach (var e in boidChunk.Neighboors.SelectMany(n => n.Data))
+        foreach (var eref in neighboorEntities)
         {
+            if (eref.IsAlive() == false) continue;
+            Entity e = eref.Entity;
+
             // skip self
             if (e == ent) continue;
 
             var pos2 = e.Get<Position>().Value;
             var deltaPos = pos.Value - pos2;
-            var dist = deltaPos.Length();
+            var distSquare = deltaPos.LengthSquared();
             // Avoidance
-            if (dist <= Parameters.AvoidanceRadius)
+            if (distSquare <= Parameters.AvoidanceRadiusSquare)
             {
                 separation += deltaPos;
                 countInAvoidance++;
             }
             else
             // Flocking
-            if (dist <= Parameters.DetectRadius)
+            if (distSquare <= Parameters.DetectRadiusSquare)
             {
                 avgPos += pos2;
                 avgVel += e.Get<Direction>().Value * e.Get<Speed>().Value;
@@ -88,10 +89,12 @@ public partial class MovementSystem : BaseSystem<World, float>
         steering += ToTarget(pos.Value);
 
         // Apply
-        ApplySteering(steering, boidChunk, delta, ent, ref mm, ref id, ref node2d, ref pos, ref dir, ref speed, ref transform);
+        ApplySteering(steering, delta, ent, ref mm, ref id, ref node2d, ref pos, ref dir, ref speed, ref transform);
 
         // Remove from leaf and move to tree
-        boidChunk.MoveFromLeafToTree(ent);
+        //var thisRef = ent.Reference();
+        //archRoot.Remove(thisRef, pos.Value);
+        //archRoot.Insert(thisRef, pos.Value);
     }
 
     private Vector2 ToTarget(Vector2 pos)
@@ -128,7 +131,7 @@ public partial class MovementSystem : BaseSystem<World, float>
         return avoidBounds;
     }
 
-    private void ApplySteering(Vector2 steering, ArchChunk2d archChunk,
+    private void ApplySteering(Vector2 steering,
         in float delta, in Entity ent, ref MultiMeshInstance2D mm, ref Id id, ref Node2D node2d,
         ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
     {

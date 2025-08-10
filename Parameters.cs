@@ -32,9 +32,11 @@ public static class Parameters
     public static float BoundAvoidanceWeight = 1f;
 
     // Detection / Avoidance 
-    public static float DetectRadius = 100f;
+    public static float DetectRadius = 20f;
+    public static float DetectRadiusSquare = 20f;
     public static float DetectAngle = OneTurn * 0.8f;
     public static float AvoidanceRadius = 15; //30f; // .Squared()
+    public static float AvoidanceRadiusSquare = 15;
 
     // Base rules
     public static float Cohesion = 1f;

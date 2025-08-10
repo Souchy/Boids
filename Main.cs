@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
+using Boids.data;
 using Boids.Util;
 using BoidsProject.data;
 using BoidsProject.Util;
@@ -13,7 +14,9 @@ public partial class Main : Node
 
     public World World { get; set; }
     public Group<float> Systems { get; set; }
-    public ArchChunk2d Tree { get; set; }
+    //public ArchChunk2d Tree { get; set; }
+
+    public Quadtree<EntityReference> Tree;
 
     private Main()
     {
@@ -21,15 +24,20 @@ public partial class Main : Node
         World = World.Create();
         Systems = new Group<float>(
             "Physics",
+            new UpdateTreeSystem(World),
             new MovementSystem(World)
         );
+        Systems.Initialize();
 
         Parameters.BoundRadius = new Vector2(1280, 720) / 2f;
-        Tree = new(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
-        Tree.Subdivide(2);
-        
-        World.SubscribeEntityDestroyed(Tree.Remove);
-        World.SubscribeEntityCreated(Tree.Insert);
+        //Tree = new(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
+        //Tree.Subdivide(2);
+        //World.SubscribeEntityDestroyed(Tree.Remove);
+        //World.SubscribeEntityCreated(Tree.Insert);
+
+        var size = Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor;
+        var bounds = new Rect2(-size.X / 2f, -size.Y / 2f, size.X, size.Y);
+        Tree = new Quadtree<EntityReference>(0, bounds);
 
         EventBus.centralBus.subscribe(this);
     }
@@ -38,7 +46,11 @@ public partial class Main : Node
     public void OnResize()
     {
         //var newtree = new ArchChunk2d(Parameters.BoundRadius * Parameters.TreeToSpaceboundFactor);
-        Tree.Resize(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
+        //Tree.Resize(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
+        var size = Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor;
+        var bounds = new Rect2(-size.X / 2f, -size.Y / 2f, size.X, size.Y);
+        Tree = new Quadtree<EntityReference>(0, bounds);
     }
+
 
 }
