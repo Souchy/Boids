@@ -10,15 +10,17 @@ namespace Boids.Util;
 
 public static class RectExtensions
 {
-    public static bool Intersects(this Rect2 rect, Vector2 point, float radius)
+    public static bool Intersects<T>(this Quadtree<T> quad, Vector2 point, float radius)
     {
-        var min = rect.Position;
-        var max = rect.Position + rect.Size;
-        //  basic AABB square collision check
-        return point.X - radius < max.X &&
-                point.X + radius > min.X &&
-                point.Y - radius < max.Y &&
-                point.Y + radius > min.Y;
+        // Find the closest point to the circle within the rectangle
+        Vector2 closestPoint = new(
+            Mathf.Clamp(point.X, quad.Bounds.Position.X, quad.PosMax.X),
+            Mathf.Clamp(point.Y, quad.Bounds.Position.Y, quad.PosMax.Y)
+        );
+        // Calculate the distance between the closest point and the circle's center
+        float distanceSquared = (closestPoint - point).LengthSquared();
+        // Check if the distance is less than or equal to the radius squared
+        return distanceSquared <= radius * radius;
     }
 }
 
@@ -50,11 +52,13 @@ public class Quadtree<T>
             HalfSize = Bounds.Size / 2f;
             QuarterSize = Bounds.Size / 4f;
             Center = Bounds.Position + HalfSize;
+            PosMax = Bounds.Position + Bounds.Size;
         }
     }
     public Vector2 Center { get; private set; }
     public Vector2 HalfSize { get; private set; }
     public Vector2 QuarterSize { get; private set; }
+    public Vector2 PosMax { get; private set; }
 
     public bool IsLeaf => Children.Length == 0;
     public bool HasChildren => Children.Length > 0; // Children != null && 
@@ -142,13 +146,13 @@ public class Quadtree<T>
             if (totalItems > DATA_CAPACITY) return false;
 
             // Merge child nodes back into this node
-            //Data = [];
-            //foreach (var node in Children)
-            //{
-            //    Data.AddRange(node.Data);
-            //    node.Clear();
-            //}
-            //Children = [];
+            Data = [];
+            foreach (var node in Children)
+            {
+                Data.AddRange(node.Data);
+                node.Clear();
+            }
+            Children = [];
             return true;
         }
         Data.Remove(item);
@@ -167,6 +171,7 @@ public class Quadtree<T>
             }
         }
         else
+        if (Data.Count > 0)
         {
             nodes.Add(this);
         }
@@ -175,7 +180,7 @@ public class Quadtree<T>
 
     public List<Quadtree<T>> QueryNodes(Vector2 point, float radius, List<Quadtree<T>> nodes)
     {
-        if (!Bounds.Intersects(point, radius))
+        if (!this.Intersects(point, radius))
             return nodes;
         if (HasChildren)
         {
@@ -184,7 +189,8 @@ public class Quadtree<T>
                 child.QueryNodes(point, radius, nodes);
             }
         }
-        else
+        else 
+        if(Data.Count > 0)
         {
             nodes.Add(this);
         }

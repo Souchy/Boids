@@ -23,8 +23,8 @@ public partial class MovementSystem : BaseSystem<World, float>
     [Query]
     [All(typeof(Alive), typeof(BoidTag))]
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Move([Data] in float delta, in Entity ent, ref Quadtree<EntityReference> archRoot, ref MultiMeshInstance2D mm, ref Id id, ref Node2D node2d,
-        ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
+    public void Move([Data] in float delta, in Entity ent, ref Quadtree<EntityReference> archRoot, ref Sprite2D node2d,
+        ref Position pos, ref Direction dir, ref Speed speed) //, ref Transform2D transform) // ref MultiMeshInstance2D mm, ref Id id, 
     {
         var currentVel = dir.Value * speed.Value;
         var steering = Vector2.Zero;
@@ -39,16 +39,16 @@ public partial class MovementSystem : BaseSystem<World, float>
 
 
         var neighboorNodes = archRoot.QueryNodes(pos.Value, Parameters.DetectRadius, []);
-        var neighboorEntities = neighboorNodes.SelectMany(n => n.Data).ToArray(); //.Where(eref => eref.IsAlive()).Select(eref => eref.Entity);
-        int count = neighboorEntities.Length;
+        var neighboorEntities = neighboorNodes.SelectMany(n => n.Data).Where(eref => eref.IsAlive());
+        //int count = neighboorEntities.Length;
 
         foreach (var eref in neighboorEntities)
         {
-            if (eref.IsAlive() == false) continue;
+            //if (eref.IsAlive() == false) continue;
             Entity e = eref.Entity;
 
-            // skip self
-            if (e == ent) continue;
+            // skip self and non-boid entities
+            if (e == ent || !e.Has<BoidTag>()) continue;
 
             var pos2 = e.Get<Position>().Value;
             var deltaPos = pos.Value - pos2;
@@ -84,12 +84,12 @@ public partial class MovementSystem : BaseSystem<World, float>
         // Bound avoidance
         steering += AvoidBounds(pos.Value, dir.Value);
         // Obstacles
-        steering += AvoidObstacles();
+        steering += AvoidObstacles(neighboorEntities, pos, node2d);
         // Target
         steering += ToTarget(pos.Value);
 
         // Apply
-        ApplySteering(steering, delta, ent, ref mm, ref id, ref node2d, ref pos, ref dir, ref speed, ref transform);
+        ApplySteering(steering, delta, ent, ref node2d, ref pos, ref dir, ref speed); //, ref transform); // ref mm, ref id, 
 
         // Remove from leaf and move to tree
         //var thisRef = ent.Reference();
@@ -99,18 +99,59 @@ public partial class MovementSystem : BaseSystem<World, float>
 
     private Vector2 ToTarget(Vector2 pos)
     {
-        return (Parameters.Target - pos) * Parameters.TargetWeight;
+        return Parameters.TargetWeight * 0.01f * (Parameters.Target - pos);
     }
 
-    private Vector2 AvoidObstacles()
+    private Vector2 AvoidObstacles(IEnumerable<EntityReference> neighboorEntities, Position pos, Node2D node2d)
     {
+        //var scene = node2d.GetParent().GetParent<Node2D>();
+
         /*
          * TODO obstacles avoidance
-        foreach(var obstacle in obstacles) {
-            steering += obstacle.N * obstacleWeight * deltaPosObs;
-        }
          */
-        return Vector2.Zero;
+        //var obstacles = neighboorEntities
+        //    .Select(eref => eref.Entity)
+        //    .Where(e => e.Has<ObstacleTag>());
+        Vector2 steering = Vector2.Zero;
+        bool hasObstacle = false;
+        foreach (var oref in neighboorEntities)
+        {
+            var obstacle = oref.Entity;
+            if (!obstacle.Has<ObstacleTag>()) continue;
+
+            var pos2 = obstacle.Get<Position>().Value;
+
+            var obstacleRadius = Parameters.ObstacleRadius;
+            var detectRadius = Parameters.DetectRadius;
+            // check if detect radius intersects with obstacle radius
+            var deltaPosObs = pos.Value - pos2;
+            var distSquareObs = deltaPosObs.LengthSquared();
+            if (distSquareObs <= detectRadius * detectRadius + obstacleRadius * obstacleRadius)
+            {
+                steering += Vector2.One / deltaPosObs;
+                //scene.DrawLine(pos.Value, pos2, Colors.Violet, 5f);
+                //scene.CallDeferred("DrawLine", pos.Value, pos2, Colors.Violet, 5f, true);
+                //Boids.Instance.Lines.AddChild(
+                //    new Line2D()
+                //    {
+                //        Points = [pos.Value, pos2],
+                //        Width = 3f,
+                //        DefaultColor = Colors.Violet
+                //    }
+                //);
+                hasObstacle = true;
+                //steering +=  obstacle.N  * obstacleWeight * deltaPosObs; // N = face normal
+            }
+        }
+        if (hasObstacle)
+        {
+            node2d.Modulate = Colors.Red;
+        }
+        else
+        {
+            node2d.Modulate = Colors.White;
+        }
+        return steering * Parameters.ObstacleAvoidanceWeight;
     }
 
     private Vector2 AvoidBounds(Vector2 pos, Vector2 dir)
@@ -132,8 +173,8 @@ public partial class MovementSystem : BaseSystem<World, float>
     }
 
     private void ApplySteering(Vector2 steering,
-        in float delta, in Entity ent, ref MultiMeshInstance2D mm, ref Id id, ref Node2D node2d,
-        ref Position pos, ref Direction dir, ref Speed speed, ref Transform2D transform)
+        in float delta, in Entity ent, ref Sprite2D node2d, // ref MultiMeshInstance2D mm, ref Id id, 
+        ref Position pos, ref Direction dir, ref Speed speed) //, ref Transform2D transform)
     {
         // Lerp velocity
         var newSpeed = Math.Clamp(steering.Length(), Parameters.MinimumSpeed, Parameters.MaximumSpeed);
@@ -143,22 +184,9 @@ public partial class MovementSystem : BaseSystem<World, float>
         // Update pos
         pos.Value += dir.Value * speed.Value * delta;
         var angle = dir.Value.Angle();
-        {
-            if (dir.Value.X > 0)
-            {
-                transform = new Transform2D(angle % (float) Math.PI, Parameters.FlipV, 0, pos.Value);
-                //transform = new Transform2D(angle, Parameters.FlipH, 0, pos.Value);
-            }
-            else
-            {
-                transform = new Transform2D(angle, pos.Value);
-                //transform = new Transform2D(angle, Vector2.One, 0, pos.Value);
-            }
-            mm.Multimesh.SetInstanceTransform2D(id.Value, transform);
-        }
-        {
-            node2d.Position = pos.Value;
-        }
+
+        node2d.Position = pos.Value;
+        node2d.Rotation = angle;
 
     }
 

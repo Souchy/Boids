@@ -14,7 +14,6 @@ public partial class Main : Node
 
     public World World { get; set; }
     public Group<float> Systems { get; set; }
-    //public ArchChunk2d Tree { get; set; }
 
     public Quadtree<EntityReference> Tree;
 
@@ -30,10 +29,6 @@ public partial class Main : Node
         Systems.Initialize();
 
         Parameters.BoundRadius = new Vector2(1280, 720) / 2f;
-        //Tree = new(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
-        //Tree.Subdivide(2);
-        //World.SubscribeEntityDestroyed(Tree.Remove);
-        //World.SubscribeEntityCreated(Tree.Insert);
 
         var size = Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor;
         var bounds = new Rect2(-size.X / 2f, -size.Y / 2f, size.X, size.Y);
@@ -45,8 +40,6 @@ public partial class Main : Node
     [Subscribe(nameof(Parameters.BoundRadius), nameof(Parameters.TreeToSpaceboundFactor))]
     public void OnResize()
     {
-        //var newtree = new ArchChunk2d(Parameters.BoundRadius * Parameters.TreeToSpaceboundFactor);
-        //Tree.Resize(Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor);
         var size = Parameters.BoundRadius * 2f * Parameters.TreeToSpaceboundFactor;
         var bounds = new Rect2(-size.X / 2f, -size.Y / 2f, size.X, size.Y);
         Tree = new Quadtree<EntityReference>(0, bounds);

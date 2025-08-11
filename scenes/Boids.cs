@@ -12,60 +12,89 @@ namespace BoidsProject;
 
 public partial class Boids : Node2D
 {
+    public static Boids Instance;
     #region Nodes
     [NodePath] public Camera2D Camera2D { get; set; }
     [NodePath] public ColorRect BoundsBackground { get; set; }
-    [NodePath] public MultiMeshInstance2D MultiMeshInstance2D { get; set; }
+    //[NodePath] public MultiMeshInstance2D MultiMeshInstance2D { get; set; }
     [NodePath] public Node2D Lines { get; set; }
     [NodePath] public Node2D Target { get; set; }
     #endregion
 
+    //public override void _PhysicsProcess(double delta)
+    //{
+    //    Parameters.AvoidanceRadiusSquare = Parameters.AvoidanceRadius * Parameters.AvoidanceRadius;
+    //    Parameters.DetectRadiusSquare = Parameters.DetectRadius * Parameters.DetectRadius;
+    //    Main.Instance.Tree.Clear();
+    //    Main.Instance.Systems.Update((float) delta);
+    //    OnResize();
+    //}
+
     public override void _PhysicsProcess(double delta)
     {
+
         Parameters.AvoidanceRadiusSquare = Parameters.AvoidanceRadius * Parameters.AvoidanceRadius;
         Parameters.DetectRadiusSquare = Parameters.DetectRadius * Parameters.DetectRadius;
         Main.Instance.Tree.Clear();
         Main.Instance.Systems.Update((float) delta);
-        //OnResize();
+        OnResize();
     }
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         this.OnReady();
+        Instance = this;
         EventBus.centralBus.subscribe(this);
 
-        var texture = GD.Load<Texture2D>("res://assets/Flayer Evo1 1.png");
+        //var evoTex = GD.Load<Texture2D>("res://assets/Flayer Evo1 1.png");
+        var ringTex = GD.Load<Texture2D>("res://assets/ring100.png");
+        var texture = GD.Load<Texture2D>("res://assets/arrow32.png");
 
-        MultiMeshInstance2D.Texture = texture;
-        MultiMeshInstance2D.Multimesh.InstanceCount = Parameters.Count;
-        MultiMeshInstance2D.Multimesh.Mesh = new QuadMesh()
-        {
-            Size = new Vector2(50, 36)
-        };
+        var poolNode = GetNode("SpritePool"); //new Node2D();
+        this.AddChild(poolNode);
 
-        var boidScene = GD.Load<PackedScene>("res://scenes/Boid.tscn");
+        // Create boids
         for (int i = 0; i < Parameters.Count; i++)
         {
-            var node = boidScene.Instantiate<Node2D>();
+            var sprite = new Sprite2D() { Texture = texture, TextureFilter = TextureFilterEnum.Nearest };
+            //sprite.Modulate = new Color("#03fc17");
             var entt = Main.Instance.World.Create(
                 new Alive(),
                 new BoidTag(),
-
                 Main.Instance.Tree,
-                MultiMeshInstance2D,
-                new Id(i),
-
                 new Position(Parameters.RandomPosition()),
                 new Direction(Parameters.RandomVector2Centered().Normalized()),
                 new Speed(Parameters.RandomSpeed()),
-                new Transform2D(),
-                node
+                sprite
             );
-            // Add node2d to scene if 1st entity
-            if(i == 0)
-                MultiMeshInstance2D.AddChild(node);
+            poolNode.AddChild(sprite);
+            Main.Instance.Tree.Insert(entt.Reference(), entt.Get<Position>().Value);
         }
+
+        // Create obstacle
+        var obstacleNode = new Sprite2D()
+        {
+            Texture = ringTex,
+            Modulate = new Color("#ff0000")
+        };
+        obstacleNode.Scale = Vector2.One * (Parameters.ObstacleRadius / 50f); // 50 is the radius of the texture
+        var obstacle = Main.Instance.World.Create(
+            new ObstacleTag(),
+            Main.Instance.Tree,
+            new Position(new Vector2(300, 200)),
+            new CollisionShape2D()
+            {
+                Shape = new CircleShape2D()
+                {
+                    Radius = Parameters.ObstacleRadius
+                }
+            },
+            obstacleNode
+        );
+        obstacleNode.Position = obstacle.Get<Position>().Value; 
+        Main.Instance.Tree.Insert(obstacle.Reference(), obstacle.Get<Position>().Value);
+        this.AddChild(obstacleNode);
 
         //DrawChunks(Main.Instance.Tree, 0, Quadtree<int>.MAX_DEPTH);
     }
@@ -113,7 +142,7 @@ public partial class Boids : Node2D
             InputEventMouseButton emb = (InputEventMouseButton) @event;
             if (emb.IsPressed())
             {
-                if(emb.ButtonIndex == MouseButton.Right)
+                if (emb.ButtonIndex == MouseButton.Right)
                 {
                     Target.Position = this.GetGlobalMousePosition(); //emb.Position;
                     Parameters.Target = Target.Position;

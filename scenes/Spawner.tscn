@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://depvbopxbdytr"]
+
+[node name="Spawner" type="Node2D"]
+
+[node name="Sprites" type="Node2D" parent="."]
+
+[node name="Collisions" type="Node2D" parent="."]
